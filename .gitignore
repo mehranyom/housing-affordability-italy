@@ -1,0 +1,19 @@
+# Data: too big for GitHub, and OMI data needs a login
+data/raw/
+data/processed/
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Virtual environments
+.venv/
+
+# Editors and operating systems
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Jupyter
+.ipynb_checkpoints/
