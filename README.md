@@ -32,6 +32,7 @@ incomes of all taxpayers and, separately, with the wages of employees.
 | [Elenco comuni italiani](https://www.istat.it/storage/codici-unita-amministrative/Elenco-comuni-italiani.xlsx) | ISTAT | Official code, name, province, region and macro-area of every comune | current list | **Automatic** download (XLSX) |
 | [Confini amministrativi, versione generalizzata](https://www.istat.it/storage/cartografia/confini_amministrativi/generalizzati/2025/Limiti01012025_g.zip) | ISTAT | Boundaries (polygons) of every comune, as of 1 January 2025 | 2025 | **Automatic** download (ZIP → shapefile) |
 | [Cost of borrowing for house purchase, Italy](https://data.ecb.europa.eu/) (series `MIR.M.IT.B.A2C.AM.R.A.2250.EUR.N`) | ECB (European Central Bank) | Average interest rate on new mortgages in Italy, monthly | 2010 to today | **Automatic** download through the ECB Data Portal **API** (CSV) |
+| [HICP, overall index, Italy](https://data.ecb.europa.eu/) (series `ICP.M.IT.N.000000.4.INX`) | ECB (Eurostat data) | Harmonised consumer price index, monthly (2015 = 100), used to measure inflation | 2014 to today | **Automatic** download through the ECB Data Portal **API** (CSV) |
 
 All sources are joined through the **6-digit ISTAT municipal code**
 (e.g. `015146` = Milano), always handled as text so that the leading zero is kept.
@@ -117,6 +118,29 @@ Findings from [`notebooks/02_explore_omi.ipynb`](notebooks/02_explore_omi.ipynb)
 - **ISTAT code with a region prefix:** `Comune_ISTAT` is `1006003` = region `1` (Piemonte)
   + `006003` (Alessandria). It has 7 or 8 digits, so the **last 6 digits** are kept to
   match MEF and ISTAT.
+- **Broken codes for merged comuni:** about 250 rows (some 15 comuni, mostly born from
+  mergers, e.g. Piadena Drizzona, Vermezzo con Zelo, Val di Chy) have codes of 5 or 6
+  digits: the region prefix is there but the leading zeros are lost (`319116` = region 3
+  + `019116`), or the prefix is missing (`38028` = `038028`). One row (Ordona) has no code.
+  Taking the last 6 digits would give wrong codes, some of which could exist in **another
+  province** (a silent wrong match). Fix: try every reading of the digits and keep the one
+  that exists in the ISTAT list **in the same province**; if none does, match on
+  province + name.
+- **Zone maps change over time.** OMI sometimes redraws its zones: 10% of comuni have a
+  different number of zones in 2014 and 2024 (Turin 41 → 47, Venice 14 → 32). Comparing
+  the "median of the zones" of two different maps mixes a price change with a map change.
+  So **changes over time are computed zone by zone** (same comune + same zone code in both
+  years), then the median per comune. This matters a lot for some cities (Turin −8.2% with
+  all zones, −0.5% with the same zones; Venice −16.5% vs −4.7%) and little for others
+  (Bologna +5.8% both ways). Caveat: a zone code kept by OMI may cover a slightly
+  different area after a revision.
+- **Prices 2014 → 2024 (same zones):** the median comune fell by about 5% in **nominal**
+  terms (−5.2%, weighted by taxpayers), i.e. about −21% in **real** terms after ~20%
+  inflation. With all zones, prices rose in only 22% of comuni, home to 28% of taxpayers. Milan is the
+  big exception (+42%); Rome (−12%), Genoa (−19%) and Palermo (−8%) fell. This matches the
+  known Italian pattern (prices fell after the 2008 and 2011–12 crises until about 2019 and
+  recovered mainly in a few cities), but OMI values are conservative estimates that react
+  slowly, not transaction prices, so recent rises may be understated.
 - **Price 0 = no quotation.** In the zones hit by the 2016 Central Italy earthquake
   (Norcia, Cascia, Arquata del Tronto, Preci, ...) OMI publishes 0 €/m². Zeros are treated
   as missing values.
@@ -158,6 +182,11 @@ Findings from [`notebooks/03_explore_istat.ipynb`](notebooks/03_explore_istat.ip
 - **Mortgage rate (ECB):** the composite cost of borrowing on new home loans in Italy.
   Yearly averages are used for 2014 and 2024. The decade had record-low rates around
   2020–2021, followed by a sharp rise in 2022–2023.
+- **Inflation (ECB, HICP):** used in the OMI notebook to turn the 2014→2024 price change
+  into a **real** change (the first version used an approximate 20%). Inflation = average
+  index of 2024 / average index of 2014 − 1, with yearly averages to match the MEF tax
+  years. The API URL is `.../service/data/<dataset>/<series key>`: the dataset (`ICP`,
+  `MIR`) is separated from the key by a slash, otherwise the server answers *400 Bad Request*.
 - **Mortgage payment:** annuity formula with 80% loan-to-value over 25 years, vectorised in
   numpy, with a special case for a zero rate. MEF wages are **gross**, while banks use
   **net** income, so the burden shown is a lower bound.
@@ -194,7 +223,8 @@ Findings from [`notebooks/03_explore_istat.ipynb`](notebooks/03_explore_istat.ip
 - People are counted where they **live**, not where they work (commuters).
 - OMI gives **price ranges** for zones, not actual sale prices.
 - All values are **nominal** euros. Comparing prices and incomes of the same year
-  is not affected by inflation.
+  is not affected by inflation; changes over time are also shown in **real** terms,
+  deflated with the HICP.
 - Results describe **comuni**, not individual people, and correlations do not
   imply causation.
 
