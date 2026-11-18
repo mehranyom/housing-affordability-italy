@@ -135,12 +135,24 @@ Findings from [`notebooks/02_explore_omi.ipynb`](notebooks/02_explore_omi.ipynb)
   (Bologna +5.8% both ways). Caveat: a zone code kept by OMI may cover a slightly
   different area after a revision.
 - **Prices 2014 → 2024 (same zones):** the median comune fell by about 5% in **nominal**
-  terms (−5.2%, weighted by taxpayers), i.e. about −21% in **real** terms after ~20%
+  terms (−5.2%, weighted by taxpayers), i.e. about −23% in **real** terms after 22.4%
   inflation. With all zones, prices rose in only 22% of comuni, home to 28% of taxpayers. Milan is the
   big exception (+42%); Rome (−12%), Genoa (−19%) and Palermo (−8%) fell. This matches the
   known Italian pattern (prices fell after the 2008 and 2011–12 crises until about 2019 and
   recovered mainly in a few cities), but OMI values are conservative estimates that react
   slowly, not transaction prices, so recent rises may be understated.
+- **Rents follow prices, but fall less.** Across comuni, the change in rents and the
+  change in prices 2014 → 2024 are strongly related (Spearman rho = +0.58, n = 6,921; +0.59
+  without the comuni OMI never updated). In the fifth of comuni where prices fell most
+  (−19% to −52%, median −24%), the median rent fell only 15%; where prices rose most
+  (median +11%), rents rose 15%. Rents beat prices in **every** fifth of comuni (by +9, +10,
+  +5, +2, +4 points): they barely fall when prices fall and keep pace or rise faster when
+  prices rise (asymmetric adjustment, "rockets and feathers"), so rental yields rose almost
+  everywhere. Likely drivers (not tested here): tighter mortgage credit after 2011 pushing
+  people to rent, and fewer long-term rentals in cities and tourist towns. Statistical note:
+  sorting comuni by price change exaggerates the extreme groups' price changes (noise), which
+  could explain part of the left side but works *against* the result on the right side. Caveat: OMI may
+  revise prices and rents of a zone together, which could inflate the correlation.
 - **Price 0 = no quotation.** In the zones hit by the 2016 Central Italy earthquake
   (Norcia, Cascia, Arquata del Tronto, Preci, ...) OMI publishes 0 €/m². Zeros are treated
   as missing values.
@@ -161,6 +173,17 @@ Findings from [`notebooks/02_explore_omi.ipynb`](notebooks/02_explore_omi.ipynb)
   centre, D at 93%, E at 95% and R (rural) at 83%. E being slightly above D fits seaside and
   lake towns, where the "suburban" zone is often the waterfront. Lesson: compare prices
   *within* comuni, or weight them, before drawing conclusions.
+
+- **Do prices follow local wages? (2024)** Across 4,957 comuni with at least 1,000
+  taxpayers, the elasticity of price to the average employee wage is **1.10** (log-log
+  regression, `scipy.stats.linregress`; 95% confidence interval 1.04–1.16, so
+  significantly above 1): a comune with 10% higher wages has about 11% higher
+  prices, so richer places are *not* more affordable. But wages explain only **19%** of the
+  variation in prices (R² = 0.19): location matters more. The least affordable comuni (more
+  than 10 years of wage for 70 m²) are tourist, ski and island towns (Livigno, Capri,
+  Anacapri, Cortina, Ponza), where prices are set by outside buyers, not local workers.
+  Among big cities, Naples needs about as many years of wage as Milan or Rome: lower prices,
+  but also lower wages. Cross-section only: this is a correlation, not a causal effect.
 
 ### Notes on the ISTAT and ECB data
 
@@ -183,7 +206,8 @@ Findings from [`notebooks/03_explore_istat.ipynb`](notebooks/03_explore_istat.ip
   Yearly averages are used for 2014 and 2024. The decade had record-low rates around
   2020–2021, followed by a sharp rise in 2022–2023.
 - **Inflation (ECB, HICP):** used in the OMI notebook to turn the 2014→2024 price change
-  into a **real** change (the first version used an approximate 20%). Inflation = average
+  into a **real** change (the first version used an approximate 20%). Result: **+22.4%**
+  (HICP yearly average 99.9 in 2014, 122.3 in 2024). Inflation = average
   index of 2024 / average index of 2014 − 1, with yearly averages to match the MEF tax
   years. The API URL is `.../service/data/<dataset>/<series key>`: the dataset (`ICP`,
   `MIR`) is separated from the key by a slash, otherwise the server answers *400 Bad Request*.
