@@ -23,6 +23,10 @@ OMI_DIR = RAW_DIR / "omi"
 ISTAT_DIR = RAW_DIR / "istat"
 ECB_DIR = RAW_DIR / "ecb"
 
+# Output of scripts/build_dataset.py, read by the analysis notebook and the app
+PANEL_FILE = PROCESSED_DIR / "comuni_panel.csv"        # one row per comune and year
+CHANGES_FILE = PROCESSED_DIR / "comuni_changes.csv"    # one row per comune, 2014 -> 2024
+
 # ---------------------------------------------------------------------------
 # Downloads
 # ---------------------------------------------------------------------------
