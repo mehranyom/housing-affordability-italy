@@ -26,6 +26,9 @@ ECB_DIR = RAW_DIR / "ecb"
 # Output of scripts/build_dataset.py, read by the analysis notebook and the app
 PANEL_FILE = PROCESSED_DIR / "comuni_panel.csv"        # one row per comune and year
 CHANGES_FILE = PROCESSED_DIR / "comuni_changes.csv"    # one row per comune, 2014 -> 2024
+ZONES_FILE = PROCESSED_DIR / "omi_zones.csv"           # one row per OMI zone and year
+INCOME_MIX_FILE = PROCESSED_DIR / "income_mix.csv"     # Italy: taxpayers by income type
+RATES_FILE = PROCESSED_DIR / "mortgage_rates.csv"      # Italy: mortgage rate, monthly
 
 # ---------------------------------------------------------------------------
 # Downloads
@@ -73,3 +76,14 @@ MIN_TAXPAYERS = 1000           # rankings only for comuni with at least this man
 OMI_PROPERTY_TYPE = "Abitazioni civili"
 OMI_CONDITION = "NORMALE"
 MILAN_CODE = "015146"
+MORTGAGE_LIMIT_PCT = 33        # highest payment / monthly wage a bank usually accepts
+
+# The ten largest cities (ISTAT codes), for labels and comparisons
+BIG_CITIES = {
+    "015146": "Milano", "058091": "Roma", "063049": "Napoli", "001272": "Torino",
+    "082053": "Palermo", "010025": "Genova", "037006": "Bologna", "048017": "Firenze",
+    "072006": "Bari", "027042": "Venezia",
+}
+# Distance bands from Milan, in km (the upper edge of each band)
+DISTANCE_BANDS_KM = [0.001, 15, 30, 50, 100, 2000]
+DISTANCE_LABELS = ["Milan", "< 15 km", "15-30 km", "30-50 km", "50-100 km", "> 100 km"]
