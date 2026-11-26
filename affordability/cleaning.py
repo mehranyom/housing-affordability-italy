@@ -282,23 +282,42 @@ def zone_changes(homes, start_year, end_year):
         One row per (``istat_code``, zone) with ``buy_start``, ``buy_end``,
         ``rent_start``, ``rent_end``, ``buy_change_pct`` and ``rent_change_pct``.
     """
+# Columns that uniquely identify a single OMI zone: (comune, zone code)
     keys = ["istat_code", ZONE_COL]
+
+    # Drop any rows that are missing an ISTAT code
     zones = homes.dropna(subset=["istat_code"])
-    # A comune can repeat a zone code: OMI quotes some comuni by cadastral section
-    # (Comune_cat / Sez), each with its own B1, E1, ... So first take one value per
-    # (comune, zone): the median, as for the comune price.
+
+    # Collapse repeated zone codes (e.g., from multiple cadastral sections in the same comune)
+    # into one row per (year, comune, zone) using the median buy/rent price.
+    # **{FASCIA_COL: ...} unpacks into Fascia=("Fascia", "first") so the column name is "Fascia".
     per_zone = zones.groupby(["year"] + keys).agg(
-        buy_mid=("buy_mid", "median"), rent_mid=("rent_mid", "median"),
+        buy_mid=("buy_mid", "median"),
+        rent_mid=("rent_mid", "median"),
         **{FASCIA_COL: (FASCIA_COL, "first")},
     ).reset_index()
+
+    # Slice the start year (e.g., 2014), index by (istat_code, Zona), and keep prices + Fascia
     start = per_zone[per_zone["year"] == start_year].set_index(keys)[["buy_mid", "rent_mid", FASCIA_COL]]
+
+    # Slice the end year (e.g., 2024), index by (istat_code, Zona), and keep only prices
     end = per_zone[per_zone["year"] == end_year].set_index(keys)[["buy_mid", "rent_mid"]]
-    # how="inner": only zones found in both years; a duplicated zone would be a data error
+
+    # Match each zone in start_year with the exact same zone in end_year.
+    # how="inner" drops zones that don't exist in both years; validate="one_to_one" ensures no duplicates.
     both = start.join(end, how="inner", lsuffix="_start", rsuffix="_end", validate="one_to_one")
-    both = both.rename(columns={"buy_mid_start": "buy_start", "buy_mid_end": "buy_end",
-                                "rent_mid_start": "rent_start", "rent_mid_end": "rent_end"})
+
+    # Shorten the suffixed column names (e.g., buy_mid_start -> buy_start)
+    both = both.rename(columns={
+        "buy_mid_start": "buy_start", "buy_mid_end": "buy_end",
+        "rent_mid_start": "rent_start", "rent_mid_end": "rent_end",
+    })
+
+    # Compute the percentage change from start_year to end_year for buy price and rent
     both["buy_change_pct"] = (both["buy_end"] / both["buy_start"] - 1) * 100
     both["rent_change_pct"] = (both["rent_end"] / both["rent_start"] - 1) * 100
+
+    # Turn (istat_code, Zona) back from index labels into regular columns and return
     return both.reset_index()
 
 
